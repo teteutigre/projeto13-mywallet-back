@@ -1,6 +1,7 @@
 import { db } from "../database/db.js";
 import bcrypt from "bcrypt";
 import { signUpSchema, signInSchema } from "../schemas/authSchema.js";
+import { v4 as uuid } from "uuid";
 
 export async function signUp(req, res) {
   try {
@@ -11,7 +12,7 @@ export async function signUp(req, res) {
     const confirm = await db.collection("users").findOne({ email });
 
     if (confirm) {
-      res.status(409).send("Email ja registrado");
+      res.status(409).send("Email invalido");
       return;
     } else if (validate.error) {
       res.status(422).send(validate.error.details);
@@ -34,18 +35,21 @@ export async function signIn(req, res) {
     const user = await db.collection("users").findOne({ email });
 
     if (user && bcrypt.compareSync(password, user.passwordHash)) {
-      //token pra ele bem fofo
-      console.log("pseudo token");
-      res.status(200).send("ok");
+      const token = uuid();
+      const name = user.name;
+      await db.collection("sessions").insertOne({
+        userId: user._id,
+        token,
+      });
+      res.status(200).send({ name, token });
       return;
-    } else if (!user) {
+    } else {
       res.status(401).send("Email ou senha incorretos");
-    } else if (validate.error) {
-      res.status(422).send(validate.error.details);
       return;
     }
   } catch (err) {
     res.status(500).send(err);
+    console.log(err);
     return;
   }
 }
