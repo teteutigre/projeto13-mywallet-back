@@ -11,13 +11,3 @@ export const signUpSchema = joi.object({
   password: joi.string().required().min(6),
   passwordConfirm: joi.string().required().min(6),
 });
-
-export const newEntrySchema = joi.object({
-  value: joi.number().required(),
-  Description: joi.string().required(),
-});
-
-export const newExitSchema = joi.object({
-  value: joi.number().required(),
-  Description: joi.string().required(),
-});
