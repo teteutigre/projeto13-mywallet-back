@@ -18,13 +18,20 @@ export async function operation(req, res) {
     const { value, type, email } = req.body;
     const date = dayjs(new Date()).format("DD/MM");
     const user = await db.collection("users").findOne({ email });
+    db.collection("users").findOne({ email });
 
     await db.collection("balance").insertOne({ ...req.body, date });
 
     if (type === "exit") {
-      value - user.balance;
+      const balance = (Number(user.balance) - Number(value)).toFixed(2);
+      await db
+        .collection("users")
+        .updateOne({ email: email }, { $set: { balance: balance } });
     } else if (type === "entry") {
-      value + user.balance;
+      const balance = (Number(user.balance) + Number(value)).toFixed(2);
+      await db
+        .collection("users")
+        .updateOne({ email: email }, { $set: { balance: balance } });
     }
     res.status(200).send("ok");
   } catch (err) {
