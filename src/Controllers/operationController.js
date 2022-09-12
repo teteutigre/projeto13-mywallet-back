@@ -3,9 +3,17 @@ import dayjs from "dayjs";
 
 export async function getHome(req, res) {
   try {
-    const arrayBalance = await db.collection("balance").find().toArray();
+    const { id } = req.headers;
+    const arrayBalance = await db
+      .collection("balance")
+      .find({ id: id })
+      .toArray();
     res.send(arrayBalance);
-    return;
+
+    if (!arrayBalance) {
+      res.sendStatus(400);
+      return;
+    }
   } catch (err) {
     res.status(500).send(err);
     console.log(err);
@@ -15,25 +23,29 @@ export async function getHome(req, res) {
 
 export async function operation(req, res) {
   try {
-    const { value, type, email } = req.body;
+    const { value, type, id } = req.body;
     const date = dayjs(new Date()).format("DD/MM");
-    const user = await db.collection("users").findOne({ email });
-    db.collection("users").findOne({ email });
+    const user = await db.collection("users").findOne({ email: id });
 
-    await db.collection("balance").insertOne({ ...req.body, date });
-
-    if (type === "exit") {
-      const balance = (Number(user.balance) - Number(value)).toFixed(2);
-      await db
-        .collection("users")
-        .updateOne({ email: email }, { $set: { balance: balance } });
-    } else if (type === "entry") {
-      const balance = (Number(user.balance) + Number(value)).toFixed(2);
-      await db
-        .collection("users")
-        .updateOne({ email: email }, { $set: { balance: balance } });
+    if (!user) {
+      res.status(404).send("User not found");
+      return;
     }
-    res.status(200).send("ok");
+
+    let balance;
+    if (type === "exit") {
+      balance = (Number(user.balance) - Number(value)).toFixed(2);
+    } else if (type === "entry") {
+      balance = (Number(user.balance) + Number(value)).toFixed(2);
+    }
+
+    await db
+      .collection("users")
+      .updateOne({ email: id }, { $set: { balance: balance } });
+
+    await db.collection("balance").insertOne({ ...req.body, date: date });
+
+    res.status(200).json(balance);
   } catch (err) {
     res.status(500).send(err);
     console.log(err);

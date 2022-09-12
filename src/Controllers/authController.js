@@ -39,7 +39,7 @@ export async function signIn(req, res) {
         token,
       });
 
-      res.status(200).send({ name, token });
+      res.status(200).send({ name, token, id: email, balance: user.balance });
       return;
     } else {
       res.status(401).send("Email ou senha incorretos");

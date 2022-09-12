@@ -5,10 +5,11 @@ async function validateToken(req, res, next) {
   const token = authorization?.replace("Bearer ", "");
 
   if (!authorization) {
-    return res.status(401).send("Haders faltando");
+    return res.status(401).send("Headers faltando");
   }
 
   const session = await db.collection("sessions").findOne({ token });
+  console.log(session);
 
   if (!session) {
     return res.status(401).send("token invalido");
